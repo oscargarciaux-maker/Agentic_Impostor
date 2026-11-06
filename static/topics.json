@@ -1,0 +1,242 @@
+{
+  "brújula": [
+    "norte",
+    "aguja",
+    "orientación",
+    "expedición",
+    "magnetismo",
+    "rumbo",
+    "senderismo",
+    "mapa"
+  ],
+  "espejismo": [
+    "desierto",
+    "ilusión",
+    "horizonte",
+    "calor",
+    "reflejo",
+    "distancia",
+    "sed",
+    "óptica"
+  ],
+  "contraseña": [
+    "acceso",
+    "secreto",
+    "símbolos",
+    "memoria",
+    "seguridad",
+    "intento",
+    "bloqueo",
+    "identidad"
+  ],
+  "submarino": [
+    "profundidad",
+    "periscopio",
+    "presión",
+    "sonar",
+    "tripulación",
+    "océano",
+    "sigilo",
+    "escotilla"
+  ],
+  "nostalgia": [
+    "recuerdo",
+    "infancia",
+    "ausencia",
+    "fotografía",
+    "pasado",
+    "melancolía",
+    "regreso",
+    "aroma"
+  ],
+  "volcán": [
+    "cráter",
+    "ceniza",
+    "presión",
+    "isla",
+    "erupción",
+    "lava",
+    "silencio",
+    "riesgo"
+  ],
+  "laberinto": [
+    "salida",
+    "desvío",
+    "pared",
+    "hilo",
+    "confusión",
+    "camino",
+    "centro",
+    "decisión"
+  ],
+  "aduana": [
+    "frontera",
+    "declaración",
+    "equipaje",
+    "inspección",
+    "impuesto",
+    "viajero",
+    "control",
+    "permiso"
+  ],
+  "jazz": [
+    "improvisación",
+    "saxofón",
+    "ritmo",
+    "síncopa",
+    "club",
+    "solo",
+    "armonía",
+    "noche"
+  ],
+  "ajedrez": [
+    "sacrificio",
+    "reina",
+    "apertura",
+    "estrategia",
+    "tablero",
+    "reloj",
+    "amenaza",
+    "diagonal"
+  ],
+  "invernadero": [
+    "humedad",
+    "vidrio",
+    "cultivo",
+    "temperatura",
+    "brote",
+    "protección",
+    "luz",
+    "riego"
+  ],
+  "faro": [
+    "costa",
+    "destello",
+    "niebla",
+    "guía",
+    "navegación",
+    "torre",
+    "noche",
+    "roca"
+  ],
+  "origami": [
+    "pliegue",
+    "papel",
+    "grulla",
+    "precisión",
+    "figura",
+    "paciencia",
+    "esquina",
+    "transformación"
+  ],
+  "eclipse": [
+    "sombra",
+    "alineación",
+    "órbita",
+    "oscuridad",
+    "corona",
+    "observación",
+    "instante",
+    "lente"
+  ],
+  "carnaval": [
+    "máscara",
+    "desfile",
+    "confeti",
+    "disfraz",
+    "comparsa",
+    "música",
+    "multitud",
+    "baile"
+  ],
+  "glaciar": [
+    "hielo",
+    "lentitud",
+    "grieta",
+    "deshielo",
+    "montaña",
+    "azul",
+    "valle",
+    "siglos"
+  ],
+  "fermentación": [
+    "levadura",
+    "tiempo",
+    "burbuja",
+    "masa",
+    "microorganismo",
+    "aroma",
+    "temperatura",
+    "transformación"
+  ],
+  "paradoja": [
+    "contradicción",
+    "lógica",
+    "apariencia",
+    "dilema",
+    "infinito",
+    "razonamiento",
+    "enigma",
+    "premisa"
+  ],
+  "cápsula del tiempo": [
+    "futuro",
+    "recuerdo",
+    "entierro",
+    "mensaje",
+    "generación",
+    "caja",
+    "espera",
+    "hallazgo"
+  ],
+  "arrecife": [
+    "coral",
+    "biodiversidad",
+    "buceo",
+    "color",
+    "ecosistema",
+    "océano",
+    "refugio",
+    "caliza"
+  ],
+  "planetario": [
+    "cúpula",
+    "proyección",
+    "constelación",
+    "asiento",
+    "universo",
+    "oscuridad",
+    "guía",
+    "órbita"
+  ],
+  "mercado de pulgas": [
+    "regateo",
+    "segunda mano",
+    "hallazgo",
+    "puesto",
+    "antigüedad",
+    "colección",
+    "domingo",
+    "objeto"
+  ],
+  "reloj de arena": [
+    "grano",
+    "tiempo",
+    "cristal",
+    "inversión",
+    "espera",
+    "flujo",
+    "límite",
+    "paciencia"
+  ],
+  "huella digital": [
+    "identidad",
+    "patrón",
+    "dedo",
+    "evidencia",
+    "singularidad",
+    "tinta",
+    "acceso",
+    "rastro"
+  ]
+}

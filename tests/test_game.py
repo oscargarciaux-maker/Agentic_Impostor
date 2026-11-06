@@ -26,8 +26,8 @@ class GameTests(unittest.TestCase):
         with patch.dict('os.environ', {'AGENT_TURN_SECONDS':'0'}), patch('server.os.getenv', side_effect=lambda k,d=None: '0' if k=='AGENT_TURN_SECONDS' else d):
             server.run_game()
         self.assertEqual(server.state['status'], 'finished')
-        self.assertEqual(len(server.state['messages']), 12)
-        self.assertEqual(len(server.state['votes']), 4)
+        self.assertIn(len(server.state['messages']), (12, 21))
+        self.assertIn(len(server.state['votes']), (4, 7))
         for v in server.state['votes']:
             self.assertNotEqual(v['name'], v['target'])
         saved=json.loads((Path(self.tmp.name)/'test.json').read_text())
@@ -38,3 +38,21 @@ class GameTests(unittest.TestCase):
             server.run_game()
         self.assertEqual(server.state['status'], 'error')
         self.assertNotIn('private error', server.public()['error'])
+
+    def test_wrong_expulsion_continues_without_eliminated_player(self):
+        calls=[]
+        def decision(i, voting=False):
+            calls.append((server.state['cycle'], i, voting))
+            if voting:
+                # First cycle eliminates Bruno (civil), second eliminates Leo (impostor).
+                target = 'Bruno' if server.state['cycle']==1 else 'Leo'
+                if server.NAMES[i]==target: target='Mateo'
+                return {'name':server.NAMES[i], 'target':target, 'reason':'test'}
+            return {'name':server.NAMES[i], 'text':'pista', 'round':server.state['round']}
+        with patch('server.decide', side_effect=decision), patch('server.time.sleep'):
+            server.run_game()
+        self.assertEqual(server.state['status'],'finished')
+        self.assertEqual(server.state['winner'],'civiles')
+        self.assertEqual(server.state['eliminated_players'],['Bruno','Leo'])
+        self.assertTrue(any(c[0]==2 for c in calls))
+        self.assertFalse(any(c[0]==2 and c[1]==0 for c in calls))
