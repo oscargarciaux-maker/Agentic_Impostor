@@ -56,3 +56,40 @@ class GameTests(unittest.TestCase):
         self.assertEqual(server.state['eliminated_players'],['Bruno','Leo'])
         self.assertTrue(any(c[0]==2 for c in calls))
         self.assertFalse(any(c[0]==2 and c[1]==0 for c in calls))
+
+    def test_fixed_order_and_no_repeated_clues(self):
+        server.state['word']='brújula'
+        with patch.dict('os.environ', {'AGENT_TURN_SECONDS':'0'}, clear=True):
+            server.run_game()
+        messages=server.state['messages']
+        self.assertEqual([m['name'] for m in messages[:12]],server.NAMES*3)
+        words=[server.normalized(m['text']) for m in messages]
+        self.assertEqual(len(words),len(set(words)))
+        self.assertTrue(all(len(m['text'].split())==1 for m in messages))
+
+    def test_api_repeated_word_is_retried_before_publication(self):
+        server.state['messages']=[{'name':'Mateo','text':'Nórte','round':1}]
+        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only'}), patch('server.model_action',side_effect=[{'text':'norte'},{'text':'aguja'}]) as api:
+            action=server.decide(0)
+        self.assertEqual(action['text'],'aguja')
+        self.assertEqual(api.call_count,2)
+        self.assertEqual(len(server.state['messages']),1)
+
+    def test_api_request_uses_economical_model_and_tracks_usage(self):
+        from unittest.mock import MagicMock
+        reply=MagicMock()
+        reply.__enter__.return_value.read.return_value=json.dumps({'choices':[{'message':{'content':'{"text":"aguja"}'}}], 'usage':{'prompt_tokens':90,'completion_tokens':12}}).encode()
+        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only'}, clear=True), patch('server.urllib.request.urlopen',return_value=reply) as http:
+            server.model_action(server.agent_view(0),False)
+        payload=json.loads(http.call_args.args[0].data)
+        self.assertEqual(payload['model'],'gpt-5-nano')
+        self.assertEqual(payload['reasoning_effort'],'minimal')
+        self.assertEqual(payload['max_completion_tokens'],256)
+        self.assertEqual(server.state['usage']['calls'],1)
+        self.assertEqual(server.state['usage']['prompt_tokens'],90)
+
+    def test_api_budget_blocks_request(self):
+        server.state['usage']={'calls':server.MAX_API_CALLS}
+        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only'}), patch('server.urllib.request.urlopen') as http:
+            with self.assertRaises(RuntimeError):server.model_action(server.agent_view(0),False)
+        http.assert_not_called()
