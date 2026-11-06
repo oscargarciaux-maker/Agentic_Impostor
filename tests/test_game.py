@@ -10,10 +10,13 @@ class GameTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.patch = patch.object(server, 'DATA', Path(self.tmp.name))
         self.patch.start()
+        self.backend_patch = patch.dict('os.environ', {'AGENT_BACKEND':'local'})
+        self.backend_patch.start()
         server.state = dict(id='test', status='playing', round=1, rounds=3,
             roles=['civil','impostor','civil','civil'], word='playa', messages=[], votes=[],
             engine='Simulación local', deadline=None, error=None)
     def tearDown(self):
+        self.backend_patch.stop()
         self.patch.stop()
         self.tmp.cleanup()
     def test_private_views_and_public_state(self):
@@ -23,7 +26,7 @@ class GameTests(unittest.TestCase):
         self.assertNotIn('roles', server.public())
         self.assertNotIn('word', server.public())
     def test_complete_autonomous_game_and_ledger(self):
-        with patch.dict('os.environ', {'AGENT_TURN_SECONDS':'0'}), patch('server.os.getenv', side_effect=lambda k,d=None: '0' if k=='AGENT_TURN_SECONDS' else d):
+        with patch.dict('os.environ', {'AGENT_TURN_SECONDS':'0'}), patch('server.os.getenv', side_effect=lambda k,d=None: {'AGENT_TURN_SECONDS':'0','AGENT_BACKEND':'local'}.get(k,d)):
             server.run_game()
         self.assertEqual(server.state['status'], 'finished')
         self.assertIn(len(server.state['messages']), (12, 21))
@@ -59,7 +62,7 @@ class GameTests(unittest.TestCase):
 
     def test_fixed_order_and_no_repeated_clues(self):
         server.state['word']='brújula'
-        with patch.dict('os.environ', {'AGENT_TURN_SECONDS':'0'}, clear=True):
+        with patch.dict('os.environ', {'AGENT_TURN_SECONDS':'0','AGENT_BACKEND':'local'}, clear=True):
             server.run_game()
         messages=server.state['messages']
         self.assertEqual([m['name'] for m in messages[:12]],server.NAMES*3)
@@ -69,7 +72,7 @@ class GameTests(unittest.TestCase):
 
     def test_api_repeated_word_is_retried_before_publication(self):
         server.state['messages']=[{'name':'Mateo','text':'Nórte','round':1}]
-        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only'}), patch('server.model_action',side_effect=[{'text':'norte'},{'text':'aguja'}]) as api:
+        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only','AGENT_BACKEND':'api'}), patch('server.model_action',side_effect=[{'text':'norte'},{'text':'aguja'}]) as api:
             action=server.decide(0)
         self.assertEqual(action['text'],'aguja')
         self.assertEqual(api.call_count,2)
@@ -79,7 +82,7 @@ class GameTests(unittest.TestCase):
         from unittest.mock import MagicMock
         reply=MagicMock()
         reply.__enter__.return_value.read.return_value=json.dumps({'choices':[{'message':{'content':'{"text":"aguja"}'}}], 'usage':{'prompt_tokens':90,'completion_tokens':12}}).encode()
-        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only'}, clear=True), patch('server.urllib.request.urlopen',return_value=reply) as http:
+        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only','AGENT_BACKEND':'api'}, clear=True), patch('server.urllib.request.urlopen',return_value=reply) as http:
             server.model_action(server.agent_view(0),False)
         payload=json.loads(http.call_args.args[0].data)
         self.assertEqual(payload['model'],'gpt-5-nano')
@@ -90,6 +93,23 @@ class GameTests(unittest.TestCase):
 
     def test_api_budget_blocks_request(self):
         server.state['usage']={'calls':server.MAX_API_CALLS}
-        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only'}), patch('server.urllib.request.urlopen') as http:
+        with patch.dict('os.environ', {'AGENT_API_KEY':'test-only','AGENT_BACKEND':'api'}), patch('server.urllib.request.urlopen') as http:
             with self.assertRaises(RuntimeError):server.model_action(server.agent_view(0),False)
         http.assert_not_called()
+
+    def test_codex_receives_only_private_view_and_disables_tools(self):
+        from unittest.mock import Mock
+        def execute(command, **kwargs):
+            Path(command[command.index('-o')+1]).write_text('{"text":"aguja"}')
+            self.assertEqual(json.loads(kwargs['input'].split('\n')[-1])['role'],'civil')
+            self.assertNotIn('roles',json.loads(kwargs['input'].split('\n')[-1]))
+            self.assertNotIn(str(server.DATA),kwargs['cwd'].as_posix())
+            self.assertIn('--ephemeral',command)
+            self.assertIn('shell_tool',command)
+            self.assertIn('multi_agent',command)
+            return Mock(returncode=0,stdout='{"type":"turn.completed","usage":{"input_tokens":100,"output_tokens":8}}')
+        with patch.dict('os.environ',{'AGENT_BACKEND':'codex'}), patch('server.subprocess.run',side_effect=execute):
+            action=server.decide(0)
+        self.assertEqual(action['text'],'aguja')
+        self.assertEqual(server.state['usage']['calls'],1)
+        self.assertEqual(server.state['usage']['prompt_tokens'],100)
